@@ -10,5 +10,5 @@ using namespace std;
 
 int main(){
 	cout<<"test"<<endl;
-	hfhfjhgjh
+	cout<<"test2"<<endl;
 }
