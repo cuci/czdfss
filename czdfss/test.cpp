@@ -5,6 +5,7 @@
  *      Author: root
  */
 #include<iostream>
+#include"deelx.h"
 
 using namespace std;
 

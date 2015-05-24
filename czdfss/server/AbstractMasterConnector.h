@@ -14,10 +14,10 @@ class AbstractMasterConnector{
 public:
 	AbstractMasterConnector(){}
 	virtual ~AbstractMasterConnector() {}
-	virtual int init() =0 {return INI_OK;};
-	virtual void startToListen() =0 {};
-	virtual void stopListening() =0 {};
-	virtual int registerHandle() =0{};
+	virtual int init() {return INI_OK;};
+	virtual void startToListen() =0 ;
+	virtual void stopListening() =0 ;
+	virtual int registerHandle() =0 ;
 };
 
 #endif /* ABSTRACTSERVERCONNECTOR_H_ */

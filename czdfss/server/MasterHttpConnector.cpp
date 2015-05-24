@@ -4,8 +4,9 @@
  *  Created on: 2015年5月3日
  *      Author: root
  */
-#include"abstractmasterconnector.h"
-#include"masterhttpconnector.h"
+#include"AbstractMasterConnector.h"
+#include"MasterHttpConnector.h"
+#include"ConfigureParser.h"
 #include"common.h"
 #include<fstream>
 #include<cstring>
@@ -13,8 +14,9 @@
 #include<net/if.h>
 #include<sys/ioctl.h>
 #include<unistd.h>
+#include<stack>
+using namespace std;
 
-#define INET_IPV4
 
 #ifdef INET_IPV4
 #define INET_VERSION AF_INET
@@ -24,7 +26,14 @@
 //#define SIN_ADDR sin_addr
 #endif
 
-int get_host_address(IN_ADDR_TYPE & dest){
+#define IF_NUM 50
+#define CFG_PATH ("/etc/czdfss.configure")
+#define CFG_MASTER_IP ("Master IP")
+#define CFG_MASTER_PORT ("Master PORT")
+#define CFG_ROOT_DIR ("Root Dir")
+#define CFG_CONN_NUM ("Connection #")
+
+static int get_host_address(IN_ADDR_TYPE & dest){
 	int s;
 	s=socket(INET_VERSION,SOCK_STREAM,0);
 	if(s<0){
@@ -33,8 +42,8 @@ int get_host_address(IN_ADDR_TYPE & dest){
 	}
 	// stores the network configure info
 	struct ifconf ifconf;
-	//stores the configure of each inet card interface
-	struct ifreq ifr[50];
+	// stores the configure of each inet card interface
+	struct ifreq ifr[IF_NUM];
 	ifconf.ifc_buf=(char*) ifr;
 	ifconf.ifc_len=sizeof(ifr);
 	if(ioctl(s,SIOCGIFCONF,&ifconf)==-1){
@@ -70,31 +79,37 @@ int get_host_address(IN_ADDR_TYPE & dest){
 	return 0;
 }
 
-int MasterHttpConnector::init(){
-	http_port=htons(80);
 
-	std::ifstream cfgFile;
-	cfgFile.open("/etc/czdfss.configure",std::ios::in);
-	if(cfgFile.fail()){
-		std::cout<<"init error, fails to open the configure file"<<std::endl;
-		return -1;
+/*
+	http_port=htons(80);
+	get_host_address(netw_addr);
+	conn_num=0;
+*/
+int MasterHttpConnector::init(){
+	get_host_address(netw_addr);
+	http_port=80;
+	conn_num=0;
+	ConfigureParser cfgParser(CFG_PATH);
+#ifdef INET_IPV4
+	netw_addr.s_addr=Convert::string_to_T<uint32_t>(cfgParser[CFG_MASTER_IP]);
+#else
+   #error "INET_IPV4 not defined"
+#endif
+	http_port=Convert::string_to_T<uint16_t>(cfgParser[CFG_MASTER_PORT]);
+	conn_num=Convert::string_to_T<int>(cfgParser[CFG_CONN_NUM]);
+	if(conn_num>MAX_CONN_NUM){
+		cerr<<"error, MasterHttpConnector::init, conn_num to large"<<"\n";
+		exit(-1);
 	}
-	// temp buffer to save a configure file line
-	const unsigned line_size=1024;
-	char buf[line_size+1];
-	while(!cfgFile.eof()){
-		cfgFile.getline(buf,line_size);
-		for(int i=0;i<strlen(buf);i++){
-			if(isalpha(buf[i]==0)){
-				if(buf[i]=='#') break;
-				continue;
-			}
-		}
-	}
+	return 0;
 }
 
 MasterHttpConnector::MasterHttpConnector(){
 	init();
+}
+
+void MasterHttpConnector::startToListen(){
+
 }
 
 
